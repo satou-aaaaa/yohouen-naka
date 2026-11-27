@@ -176,6 +176,10 @@ try {
   { const c = await browser.newContext(); const r = await c.newPage(); await r.goto(url); await r.waitForTimeout(200); let again = 0;
     for (let i = 0; i < 10; i++) { await r.evaluate(() => localStorage.clear()); await r.reload(); await r.waitForTimeout(200); await r.keyboard.press("Escape"); await r.reload(); await r.waitForTimeout(200); again += await r.locator("#howto[open]").count(); }
     check("遊び方を Esc で閉じてすぐ読み直しても出ない（10回）", again === 0);
+    { await r.evaluate(() => localStorage.clear()); await r.reload(); await r.waitForTimeout(200); const before = await r.locator("#core-coach").isVisible().catch(() => false); await r.keyboard.press("Escape"); await r.waitForTimeout(100); const now = await r.locator("#core-coach").isVisible().catch(() => false); await r.reload(); await r.waitForTimeout(200);
+      check("はじめての案内は Esc で閉じ、すぐ読み直しても出ない（CodeRabbit #1）", before && !now && !(await r.locator("#core-coach").isVisible().catch(() => false)), `${before}/${now}`); }
+    { await r.evaluate(() => localStorage.clear()); await r.reload(); await r.waitForTimeout(200); await r.click("#back"); await r.waitForTimeout(100); await r.click("#go-d"); await r.waitForTimeout(100);
+      check("はじめての練習から「←」で戻って今日の5問を開いても、練習の案内は残らない（CodeRabbit #1）", !(await r.locator("#core-coach").isVisible().catch(() => false)) && await r.evaluate(() => !Core.coach.active())); }
   { const c = await browser.newContext(); const r = await c.newPage(); const big = []; // 題が h1{flex:1} で縦に伸び（伸びない形と比べて4pxより高ければ失敗）、iPad の縦で大きなすき間が出た（shared-workflows incidents/2026-11-07-title-stretched.md）
     for (const [w, h] of [[820, 1180], [390, 844], [1280, 800]]) { await r.setViewportSize({ width: w, height: h }); await r.goto(url); await r.waitForTimeout(200); await r.keyboard.press("Escape"); await r.waitForTimeout(100);
       const v = await r.evaluate(() => { const e = [...document.querySelectorAll(".title")].find((x) => x.offsetParent); if (!e) return null; const h = e.getBoundingClientRect().height; const f = e.style.flex; e.style.flex = "none"; const n = e.getBoundingClientRect().height; e.style.flex = f; return h - n; });
@@ -501,14 +505,14 @@ try {
     await solve(q);
     const tl = await q.getAttribute("#tl svg", "aria-label"), n = await q.evaluate(() => __nm.cur().P.sim.n), inN = await q.evaluate(() => __nm.cur().P.sim.tr.filter((t) => t.r <= 1).length);
     check("答えのあとに進路が1本ずつ流れる図（入った本数の読み上げ付き）と「くわしく」の式", !!tl && tl.includes(`進路${n}本のうち、予報円に入ったのは${inN}本`) && await q.locator("#tl .yh-tr.draw").count() === n && (await q.textContent(".verdict .more")).includes("1 − 0.3^(k²)"), tl);
-    await q.waitForSelector(".c-fin:not([hidden])", { timeout: 9000 }).catch(() => {});
+    check("数え上げ：流し終えると、終わりの一文が出る（9秒以内）", await q.waitForSelector(".c-fin:not([hidden])", { timeout: 9000 }).then(() => true, () => false));
     check("数え上げ：流し終えると、入った本数・外の本数・割合が出る", +(await q.textContent(".c-in")) === inN && +(await q.textContent(".c-out")) === n - inN && (await q.textContent(".c-fin")).includes(`${n}本のうち ${inN}本`), await q.textContent("#cnt"));
     await q.click("#go-x2"); await q.waitForTimeout(100);
     check("答えのあとの「もっと流してみる」で、その円のまま（予報円）流せる", await q.locator("#xbox:not([hidden]) .x-add").count() === 2 && await q.getAttribute('#xbox .x-dep button[aria-pressed="true"]', "data-k") === "1");
     { // 動きを減らす：流さず、すぐ数え終える
       await q.evaluate(() => { A11y.set("calm", true); __nm.save((s) => { s.runs.p = { mode: "p", date: __nm.todayKey(), list: ["hanbun|tl2"], res: [], cur: null, id: "tl2" }; }); __nm.play("p"); });
       await solve(q); await q.waitForTimeout(50);
-      check("動きを減らす：進路を流さず、すぐ数え終える（半分の円は太線の円で数える）", !(await q.locator(".c-fin").getAttribute("hidden")) && +(await q.textContent(".c-in")) === await q.evaluate(() => __nm.cur().P.sim.tr.filter((t) => t.r <= 0.5).length) && await q.locator("#tl .yh-k").count() === 1);
+      check("動きを減らす：進路を流さず、すぐ数え終える（半分の円は太線の円で数える）", (await q.locator(".c-fin").getAttribute("hidden")) === null && +(await q.textContent(".c-in")) === await q.evaluate(() => __nm.cur().P.sim.tr.filter((t) => t.r <= 0.5).length) && await q.locator("#tl .yh-k").count() === 1);
       await q.evaluate(() => A11y.set("calm", false)); }
     await q.context().close();
   }
@@ -553,6 +557,7 @@ try {
   }
 } catch (e) { check("ブラウザでの検査が最後まで動く", false, e.stack.split("\n").slice(0, 3).join(" ")); }
 
+try { // 追加のブラウザ検査で止まっても、レポートは出す（CodeRabbit #1）
 // 深さの部品（shared-workflows template/qa/depth-check.mjs）
 { const e = await checkDepth(readFileSync(path.join(root, "depth.js"), "utf8")); check("depth.js（自信をかける・復習）の動き", e.length === 0, e.join(" / ")); }
 // 2段目：場面の種類にはある（4つのどれか）
@@ -582,6 +587,7 @@ try {
   await q.close(); }
 { const bad = G.KINDS.filter((k) => { for (let i = 0; i < 200; i++) { const P = G.make(`${k.id}|g${i}`); if (k.o ? !G.GROUPS[P.grp] || !P.sim : P.grp) return true; } return false; }).map((k) => k.id);
   check("2段目「何を表す？」：場面の問題はどれも4つのどれか。決まりの問題には2段目が無い", bad.length === 0, bad.join(",")); }
+} catch (e) { check("追加のブラウザ検査が最後まで動く", false, e.stack.split("\n").slice(0, 3).join(" ")); }
 // 引き継ぎコード（shared-workflows template/qa/transfer-check.mjs）
 try {
   const sample = { "yhn-v1": JSON.stringify({ v: 1, tut: true, days: { "2026-11-13": { m: [0, 1, 0, 0, 2], k: ["kazu10", "kakuritsu", "kazu40", "ookisa", "nibai"] } }, hdays: {}, adays: {}, dex: { kazu40: 1, kazu10: 1, kakuritsu: 1, nibai: 1, hanbun: 1 }, runs: {}, kofi: {}, ach: {}, ebest: 7, t: 1 }), "yhn-fs": "3", "yhn-depth": JSON.stringify({ v: 1, rv: { "kazu40|x1": { s: 1, due: "2026-11-20", t: 5 } } }) }; // 復習の記録も引き継ぐかを見る（CodeRabbit shindo-yomi#1）

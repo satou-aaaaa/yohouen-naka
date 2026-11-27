@@ -26,7 +26,7 @@ node qa/run.mjs   # 問題（18種類×3000問：選び肢・答えは1つ・答
 - ★はまちがい＋ヒントの数（0で★3・1で★2・2以上で★1）。上級はヒントなし。時間制限なし（答えのあとに進路が流れるのは時間制限ではない。「動きを減らす」では流さず、すぐ数え終える）。
 - 好きなだけ遊べる：チケット・ライフ・回数制限・🔒で開くモードを入れない（shared-workflows `routines/game-dev.md` F1〜F7。QA が見る）。とことん（`runs.e`）はまちがえても続き、「ここで降りる」で終わる。「ためす」は記録に入れない。
 - 1問を深くする：`depth.js` と `qa/depth-check.mjs` は shared-workflows `template/` の写しで、ここでは直さない。自信あり・2段目「点線の円（赤い線）は、何を表す？」・復習（1→3→7日後）。記録 `yhn-v1`・文字 `yhn-fs`・復習 `yhn-depth`。
-- 共有は遊ぶ人が押したときに開くリンクだけ。シェアの文に問題・答えを出さない。感想は Issue フォーム（`.github/ISSUE_TEMPLATE/feedback.yml`）を開くだけ。応援は Ko-fi へのただのリンクだけ。
+- 共有は遊ぶ人が押したときに開くリンクだけ。シェアの文に問題・答えを出さない。感想は「感想を送る」を押したときに、全ゲーム共通の感想フォームを開くだけ（共通部品 game-core の `Core.bindFeedback`。ゲーム名と画面の設定を事前入力し、ゲームからは何も送らない。開けないときの控えが Issue フォーム `.github/ISSUE_TEMPLATE/feedback.yml`）。応援は Ko-fi へのただのリンクだけ。
 - 外へ通信しない（CSP の `connect-src 'self'` を広げない）。見やすさ（`<!-- a11y:begin -->`〜`end`・`qa/a11y.mjs`）と引き継ぎ（`transfer.js`・`qa/transfer-check.mjs`）は shared-workflows `template/` の写しで、ここでは直さない。
 - 画面の土台は同じ防災シリーズの速報まにあう？（sokuho-maniau。その元は風力階級よみ fuuryoku-yomi）から写した（ひな形の部品は `node scripts/new-game.mjs` で入れた）。写し元の言葉が残っていないかを QA が見る。保存の読み直しは共通部品 GameStore（`<!-- store:begin -->`〜`end`。shared-workflows `template/store/store.js` の写しで、ここでは直さない）。
 - PWA：画面のファイルを足したら `sw.js` の `SHELL` にも足し、中身を大きく変えたら `CACHE` の版を上げる。アイコンは `node tools/make-icons.cjs`、`og.png` は `node tools/make-og.cjs`。

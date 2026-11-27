@@ -206,7 +206,7 @@ html.a11y-dark .yh-sea{fill:#1c3346}html.a11y-dark .yh-t{stroke:#1c3346}html.a11
 .x-dep button{all:unset;box-sizing:border-box;cursor:pointer;min-height:48px;display:grid;place-items:center;border-radius:10px;border:2px solid var(--line);background:var(--paper);font-weight:800;color:var(--ink)}
 .x-dep button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
 [hidden]{display:none!important}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.draw{stroke-dashoffset:0}.pop{opacity:1}} /* 動きを止めても、進路と終わりの印は出したまま（CodeRabbit #1） */
 :is(.icon,button,a):focus-visible{outline:3px solid var(--shu)!important;outline-offset:2px}
 </style>
 <!-- a11y:begin 見やすさの設定 v10（shared-workflows template/a11y/a11y.html の写し。ここでは直さず、ひな形を直して全部のゲームへ写す。drift-check と qa/a11y.mjs が同じ中身か見る） -->
@@ -1805,7 +1805,7 @@ function play() {
     ${hard ? "" : `<button class="sub" id="hint">ヒント</button>`}
     ${run.mode === "e" ? `<p class="note">まちがえても続きます。好きなところで終われます。</p><button class="sub" id="quit">ここで降りる（${i}問で終える）</button>` : ""}
     <div id="after"></div>`;
-  $("back").onclick = home;
+  $("back").onclick = () => { if (window.Core && Core.coach && Core.coach.active()) return Core.coach.leave(); home(); }; // はじめての練習の案内が出ていたら閉じてから戻る（次の問題に「練習」の案内を残さない。CodeRabbit #1）
   document.querySelectorAll(".ch").forEach((b) => (b.onclick = () => choose(+b.dataset.j)));
   Depth.bindSure(tag, cur.id + "|" + cur.i);
   if ($("hint")) $("hint").onclick = hint;
